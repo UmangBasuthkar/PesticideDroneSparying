@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <title>Map with Markers, Lines, and Coordinates</title>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+      <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+      <link rel = "stylesheet" href = "D:\College Work\ProjectWork\PesticideDroneSpraying\flask\static\css\style.css">
+      <style>
+        #map {
+          height: 800px;
+          width: 100%;
+        }
+        #coordinates {
+          margin-top: 10px;
+        }
+      </style>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" crossorigin="anonymous" />
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+      <script src="https://kit.fontawesome.com/a9197537e4.js" crossorigin="anonymous"></script>
+  </head>
+  <body style = "background-color: #22303C;">
+    <nav class="navbar navbar-expand-lg custom-navbar">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="{{url_for('index')}}">Agrofly</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" id="navit" aria-current="page" href="{{url_for('index')}}">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="navit" href="#aboutUs">Our Goal</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="navit" href="#contactUs">Contact Us</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <br>
+    <button id="get-live-location" class = "button1">Get Live Location</button>
+    <br><br>
+    <div id="map"></div>
+    <br><br>
+    <h1 style = "color: white;">Chosen Locations</h1>
+    <table id="coordinates" class = "table table-dark">
+      <thead>
+        <tr>
+          <th>S.No.</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+    </table>
+    <button id="submit-data" class = "button1 button2" onclick = "redirect()">Submit Locations</button>
+    <script>
+      function redirect(){
+        window.location.href = "/details";
+      }
+    </script>
+    <script>
+      var userLocation = {lat:0,lng:0};
+      document.getElementById('get-live-location').addEventListener('click', function() {
+          if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(function (position) {
+                  userLocation = {
+                      lat: position.coords.latitude,
+                      lng: position.coords.longitude
+                  };
+                  var marker = new google.maps.Marker({
+                      position: userLocation,
+                      map: map,
+                      draggable: true
+                  });
+                  map.setCenter(userLocation);
+              }, function (error) {
+                  alert('Could not retrieve live location: ' + error.message);
+              });
+          } else {
+              alert('Geolocation is not supported in your browser.');
+          }
+      });
+      document.getElementById('submit-data').addEventListener('click', function() {
+          // Collect table data
+          var table = document.getElementById('coordinates');
+          var data = [];
+          if(userLocation[lat] != 0){
+            data.push(userLocation)
+          }
+          for (var i = 1; i < table.rows.length; i++) {
+              var row = table.rows[i];
+              var lat = row.cells[1].textContent;
+              var long = row.cells[2].textContent;
+              data.push({ lat: lat, lng: long });
+          }
+          // Send data to Flask using AJAX
+          fetch('/', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(data),
+          })
+          .then(response => response.json())
+          .then(data => {
+              // Handle response from Flask (if needed)
+              console.log(data);
+          });
+      });
+  </script>
+    <script>         
+      var map;
+      var markers = [];
+      var lines = [];
+      var i = 1;
+      function initMap() {
+          var initialLocation = { lat: 0, lng: 0 };
+          map = new google.maps.Map(document.getElementById('map'), {
+              center: initialLocation,
+              zoom: 8
+          });
+          map.addListener('click', function(event) {
+              addMarker(event.latLng);
+          });
+          updateCoordinates(initialLocation);
+      }
+      function addMarker(location) {
+          var marker = new google.maps.Marker({
+              position: location,
+              map: map,
+              draggable: true
+          });
+          updateCoordinates(marker.getPosition());
+          markers.push(marker);
+          updateLines();
+      }
+      function updateCoordinates(position) {
+          var coordinatesTable = document.getElementById('coordinates');
+          var newRow = document.createElement('tr');
+          var snoCell = document.createElement('td');
+          var cell1 = document.createElement('td');
+          var cell2 = document.createElement('td');
+          var deleteCell = document.createElement('td');
+          snoCell.textContent = i;
+          cell1.textContent = position.lat();
+          cell2.textContent = position.lng();
+          var deleteButton = document.createElement('button');
+          deleteButton.style.backgroundColor = 'Red';
+          deleteButton.textContent = 'Delete';
+          deleteButton.addEventListener('click', function() {
+              deleteMarker(newRow);
+          });
+          deleteCell.appendChild(deleteButton);
+          newRow.appendChild(snoCell);
+          newRow.appendChild(cell1);
+          newRow.appendChild(cell2);
+          newRow.appendChild(deleteCell);
+          coordinatesTable.appendChild(newRow);
+          i++;
+      }
+      function deleteMarker(row) {
+          var index = row.rowIndex - 1;
+          markers[index].setMap(null);
+          markers.splice(index, 1);
+          row.remove();
+          updateLines();
+      }
+      function updateLines() {
+          lines.forEach(function(line) {
+              line.setMap(null);
+          });
+          lines = [];
+          for (var j = 1; j < markers.length; j++) {
+              var line = new google.maps.Polyline({
+                  path: [markers[j - 1].getPosition(), markers[j].getPosition()],
+                  map: map,
+                  strokeColor: '#FF0000',
+                  strokeOpacity: 1.0,
+                  strokeWeight: 2
+              });
+              lines.push(line);
+          }
+      }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCd_tfX7EDwloXXITmwYRmlRZRcp_VAqGw&callback=initMap"></script>
+    <br><br><br>
+  </body>
+</html>
