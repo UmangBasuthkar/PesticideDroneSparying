@@ -13,22 +13,20 @@
   <body style = "background: linear-gradient(178.6deg, rgb(20, 36, 50) 11.8%, rgb(124, 143, 161) 83.8%);">
 
 
-    <nav class="navbar navbar-expand-lg custom-navbar">
+    <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
       <div class="container-fluid">
-        <a class="navbar-brand" href="{{url_for('index')}}">Agrofly</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+        <h1 class="navbar-brand" style="color: white;">Agrofly</h1>
+        
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav">
             <li class="nav-item">
               <a class="nav-link" id="navit" aria-current="page" href="{{url_for('index')}}">Home</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="navit" href="#aboutUs">Our Goal</a>
+              <a class="nav-link" id="navit" href="path/to/main.html#aboutUs">Our Goal</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="navit" href="#contactUs">Contact Us</a>
+              <a class="nav-link" id="navit" href="path/to/main.html#contactUs">Contact Us</a>
             </li>
           </ul>
         </div>
@@ -42,9 +40,11 @@
     <div id="map"></div>
     <br>
   
-    <button id="get-live-location" class = "button1">Get Live Location</button>
+    <div class="d-flex justify-content-center">
+      <button id="get-live-location" class="button1">Get Live Location</button>
+    </div>
 
-    <button id="submit-data" class = "button2" onclick = "redirect()">Submit Locations</button>
+    
 
 
     <br>
@@ -74,6 +74,9 @@
         </tr>
       </thead>
     </table>
+    <div class="d-flex justify-content-center">
+      <button id="submit-data" class="button2" onclick="redirect()">Submit Locations</button>
+    </div>
     <script>
       function redirect(){
         window.location.href = "/details";
