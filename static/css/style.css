@@ -1,40 +1,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Sriracha&display=swap');
-body{
-  background-color: #22303C;
+
+body {
+  background-color: #dee4eb;
+
 }
-.navbar{
+
+.navbar {
   width: 100%;
 }
-.navbar a{
-  padding: 14px 16px;
+
+.navbar a {
+  padding: 14px 14px;
   text-align: center;
   text-decoration: dotted;
-  color: #29B1B2;
+  color: white;
 }
-.nav-item{
-    font-family: monospace;
-    padding-left: 50px;
+
+.nav-item {
+  font-family: monospace;
+  padding-left: 50px;
 }
-.nav-link{
+
+.nav-link {
   display: block;
   color: #29B1B2;
   text-align: center;
   padding: 14px 16px;
   text-decoration: none;
 }
-.navbar a:hover{
+
+.navbar a:hover {
   background-color: white;
   color: black;
 }
-.custom-navbar{
-  background-color: #121618;
+
+.custom-navbar {
+  background-color: black;
 }
-.navbar-brand{
+
+.navbar-brand {
   color: #29B1B2;
   font-family: monospace;
 }
+
 .intro {
-  margin-top: -2%;
+  /* margin-top: -2%; */
   padding: 12em;
   display: flex;
   flex-direction: column;
@@ -42,11 +52,12 @@ body{
   align-items: center;
   width: 100%;
   height: 650%;
-  background-color: #121618;
+  background-color: #074769;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
+
 .intro h1 {
   font-family: sans-serif;
   font-size: 5em;
@@ -63,7 +74,6 @@ body{
   margin: 0.5em 0;
 }
 
-
 .achievements {
   align-items: center;
   padding: 1% 8%;
@@ -73,7 +83,8 @@ body{
   justify-content: center;
   align-items: center;
   color: black;
-  padding: 3% 7%;;
+  padding: 3% 7%;
+  ;
 }
 
 .achievements .work .work-text {
@@ -82,20 +93,44 @@ body{
   margin: 1em 0;
 }
 
-.button1{
+.button1 {
   background-color: #121618;
   font-family: monospace;
-  color: #29B1B2;
+  color: white;
   padding: 20px;
-  margin-left: 45%;
+  margin-left: 30%;
+ 
+}
+
+.button2 {
+  background-color: #121618;
+  font-family: monospace;
+  color: white;
+  padding: 20px;
+  margin-left: 14%;
 }
 
 button:hover {
+  background-color: white;
+  color: black;
+  transition: background-color 0.3s ease;
+}
+
+.footerStyle {
+  font-family: monospace;
   background-color: #121618;
   color: white;
 }
-.footerStyle{
-  font-family: monospace;
-  background-color: #121618;
-  color: #29B1B2;
+
+#map {
+  height: 550px;
+  width: 100%;
+  margin-top: -2%;
+  margin-bottom: 2%;
 }
+
+#coordinates {
+  margin-top: 10px;
+}
+
+
