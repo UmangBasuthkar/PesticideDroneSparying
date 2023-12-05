@@ -9,6 +9,7 @@ body {
   width: 100%;
 }
 
+
 .navbar a {
   padding: 14px 14px;
   text-align: center;
@@ -16,10 +17,19 @@ body {
   color: white;
 }
 
+
+
 .nav-item {
   font-family: monospace;
   padding-left: 50px;
 }
+.nav-item a:hover,
+.nav-item a:active,
+.nav-item a:focus {
+  background-color: white;
+  color: black;
+}
+
 
 .nav-link {
   display: block;
@@ -29,19 +39,13 @@ body {
   text-decoration: none;
 }
 
-.navbar a:hover {
-  background-color: white;
-  color: black;
-}
+
 
 .custom-navbar {
   background-color: black;
 }
 
-.navbar-brand {
-  color: #29B1B2;
-  font-family: monospace;
-}
+
 
 .intro {
   /* margin-top: -2%; */
@@ -98,7 +102,7 @@ body {
   font-family: monospace;
   color: white;
   padding: 20px;
-  margin-left: 30%;
+  
  
 }
 
@@ -107,7 +111,7 @@ body {
   font-family: monospace;
   color: white;
   padding: 20px;
-  margin-left: 14%;
+ 
 }
 
 button:hover {
@@ -131,6 +135,13 @@ button:hover {
 
 #coordinates {
   margin-top: 10px;
+}
+.navbar-brand{
+  padding: 14px 14px;
+  text-align: center;
+  text-decoration: dotted;
+  color: white;
+  font-family: monospace;
 }
 
 
