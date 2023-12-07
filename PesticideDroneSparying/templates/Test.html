@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Map with Markers, Lines, and Coordinates</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" crossorigin="anonymous" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a9197537e4.js" crossorigin="anonymous"></script>
+  </head>
+
+  <body style="background: linear-gradient(178.6deg, rgb(20, 36, 50) 11.8%, rgb(124, 143, 161) 83.8%);">
+
+    <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
+      <div class="container-fluid">
+        <h1 class="navbar-brand" style="color: white;">Agrofly</h1>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" id="navit" aria-current="page" href="{{url_for('index')}}">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="navit" href="path/to/main.html#aboutUs">Our Goal</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="navit" href="path/to/main.html#contactUs">Contact Us</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <br>
+
+    <div id="map"></div>
+    <br>
+
+    <div class="d-flex justify-content-center">
+      <button id="get-live-location" class="button1">Get Live Location</button>
+    </div>
+    <div class="d-flex justify-content-center">
+      <button id="get-survey-grid" class="button3">Get Survey Grid</button>
+    </div>
+
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <h1 style="color: #4a4343;  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:26; text-align: center;">Coordinates</h1>
+    <table class="table table-dark" style="border: 2px black; width: 70%; margin-left: auto; margin-right: auto; margin-bottom: -1%;">
+      <thead style="text-align: center;">
+        <tr>
+          <th>S.No.</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+    </table>
+    <table id="coordinates" class="table table-dark" style="border: 2px black; width: 70%; margin-left: auto; margin-right: auto;">
+      <thead style="text-align: center;">
+        <tr>
+          <th>S.No.</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+    </table>
+    <div class="d-flex justify-content-center">
+      <button id="submit-data" class="button2" onclick="redirect()">Submit Locations</button>
+    </div>
+
+    <script>
+      function redirect() {
+        window.location.href = "/details";
+      }
+
+      var userLocation = { lat: 0, lng: 0 };
+      var map;
+      var markers = [];
+      var polygon;
+
+      function initMap() {
+        var initialLocation = { lat: 17.397228, lng: 78.490215 };
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: initialLocation,
+          zoom: 8
+        });
+
+        // Initialize the polygon
+        polygon = new google.maps.Polygon({
+          editable: true,
+          draggable: true,
+        });
+
+        // Set the polygon on the map
+        polygon.setMap(map);
+
+        // Listen to changes in the polygon
+        google.maps.event.addListener(polygon.getPath(), "set_at", function () {
+          updateCoordinates();
+        });
+
+        map.addListener('click', function (event) {
+          addMarker(event.latLng);
+          updatePolygon();
+        });
+
+        updateCoordinates();
+      }
+
+      function addMarker(location) {
+        var marker = new google.maps.Marker({
+          position: location,
+          map: map,
+          draggable: true
+        });
+
+        updateCoordinates();
+        markers.push(marker);
+      }
+
+      function updateCoordinates() {
+        var coordinatesTable = document.getElementById('coordinates');
+        coordinatesTable.innerHTML = ''; // Clear previous rows
+
+        markers.forEach(function (marker, index) {
+          var newRow = document.createElement('tr');
+          var snoCell = document.createElement('td');
+          var cell1 = document.createElement('td');
+          var cell2 = document.createElement('td');
+          var deleteCell = document.createElement('td');
+
+          snoCell.textContent = index + 1;
+          cell1.textContent = marker.getPosition().lat();
+          cell2.textContent = marker.getPosition().lng();
+
+          var deleteButton = document.createElement('button');
+          deleteButton.style.backgroundColor = 'Red';
+          deleteButton.textContent = 'Delete';
+          deleteButton.addEventListener('click', function () {
+            deleteMarker(index);
+          });
+
+          deleteCell.appendChild(deleteButton);
+          newRow.appendChild(snoCell);
+          newRow.appendChild(cell1);
+          newRow.appendChild(cell2);
+          newRow.appendChild(deleteCell);
+
+          coordinatesTable.appendChild(newRow);
+        });
+      }
+
+      function deleteMarker(index) {
+        markers[index].setMap(null);
+        markers.splice(index, 1);
+        updateCoordinates();
+        updatePolygon();
+      }
+
+      function updatePolygon() {
+        var polygonPath = polygon.getPath();
+        polygonPath.clear();
+
+        markers.forEach(function (marker) {
+          polygonPath.push(marker.getPosition());
+        });
+      }
+
+      document.getElementById('get-survey-grid').addEventListener('click', function () {
+        createSurveyGrid();
+      });
+
+      function createSurveyGrid() {
+        var polygonCoordinates = polygon.getPath().getArray();
+        var bounds = new google.maps.LatLngBounds();
+        polygonCoordinates.forEach(function (coord) {
+          bounds.extend(coord);
+        });
+
+        var gridSize = 0.01; // Adjust based on the size of the grid squares
+        var gridColor = "black"; // Color of the grid lines
+
+        // Draw one-way survey lines
+        var path = [];
+        for (var lat = Math.floor(bounds.getSouthWest().lat() / gridSize) * gridSize; lat < bounds.getNorthEast().lat(); lat += gridSize) {
+          path.push({ lat: lat, lng: bounds.getSouthWest().lng() });
+          path.push({ lat: lat, lng: bounds.getNorthEast().lng() });
+        }
+
+        for (var lng = Math.floor(bounds.getSouthWest().lng() / gridSize) * gridSize; lng < bounds.getNorthEast().lng(); lng += gridSize) {
+          path.push({ lat: bounds.getNorthEast().lat(), lng: lng });
+        }
+
+        var gridLine = new google.maps.Polyline({
+          path: path,
+          geodesic: true,
+          strokeColor: gridColor,
+          strokeOpacity: 0.8,
+          strokeWeight: 4,
+        });
+        gridLine.setMap(map);
+      }
+
+      document.getElementById('submit-data').addEventListener('click', function () {
+        
+      });
+
+      document.getElementById('get-live-location').addEventListener('click', function () {
+        if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(function (position) {
+                  userLocation = {
+                      lat: position.coords.latitude,
+                      lng: position.coords.longitude
+                  };
+                  var marker = new google.maps.Marker({
+                      position: userLocation,
+                      map: map,
+                      draggable: true
+                  });
+                  map.setCenter(userLocation);
+              }, function (error) {
+                  alert('Could not retrieve live location: ' + error.message);
+              });
+          } else {
+              alert('Geolocation is not supported in your browser.');
+          }
+      });
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap&v=weekly"></script>
+    <br><br><br>
+  </body>
+</html>
