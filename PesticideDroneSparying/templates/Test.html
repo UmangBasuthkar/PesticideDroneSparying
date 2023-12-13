@@ -176,39 +176,49 @@
       });
 
       function createSurveyGrid() {
-        var polygonCoordinates = polygon.getPath().getArray();
-        var bounds = new google.maps.LatLngBounds();
-        polygonCoordinates.forEach(function (coord) {
-          bounds.extend(coord);
-        });
+    var polygonCoordinates = polygon.getPath().getArray();
+    var bounds = new google.maps.LatLngBounds();
+    polygonCoordinates.forEach(function (coord) {
+        bounds.extend(coord);
+    });
 
-        var gridSize = 0.01; // Adjust based on the size of the grid squares
-        var gridColor = "black"; // Color of the grid lines
+    var gridSize = calculateGridSize(bounds); // Calculate grid size based on polygon area
+    var gridColor = "black"; // Color of the grid lines
 
-        // Draw one-way survey lines
-        var path = [];
-        for (var lat = Math.floor(bounds.getSouthWest().lat() / gridSize) * gridSize; lat < bounds.getNorthEast().lat(); lat += gridSize) {
-          path.push({ lat: lat, lng: bounds.getSouthWest().lng() });
-          path.push({ lat: lat, lng: bounds.getNorthEast().lng() });
-        }
+    var path = [];
 
-        for (var lng = Math.floor(bounds.getSouthWest().lng() / gridSize) * gridSize; lng < bounds.getNorthEast().lng(); lng += gridSize) {
-          path.push({ lat: bounds.getNorthEast().lat(), lng: lng });
-        }
+    for (var lat = bounds.getSouthWest().lat(); lat <= bounds.getNorthEast().lat(); lat += gridSize) {
+        path.push({ lat: lat, lng: bounds.getSouthWest().lng() });
+        path.push({ lat: lat, lng: bounds.getNorthEast().lng() });
+    }
 
-        var gridLine = new google.maps.Polyline({
-          path: path,
-          geodesic: true,
-          strokeColor: gridColor,
-          strokeOpacity: 0.8,
-          strokeWeight: 4,
-        });
-        gridLine.setMap(map);
-      }
+    for (var lng = bounds.getSouthWest().lng(); lng <= bounds.getNorthEast().lng(); lng += gridSize) {
+        path.push({ lat: bounds.getNorthEast().lat(), lng: lng });
+    }
 
-      document.getElementById('submit-data').addEventListener('click', function () {
-        
-      });
+    var gridLine = new google.maps.Polyline({
+        path: path,
+        geodesic: true,
+        strokeColor: gridColor,
+        strokeOpacity: 0.2,
+        strokeWeight: 1,
+    });
+    gridLine.setMap(map);
+}
+
+function calculateGridSize(bounds) {
+    // Calculate the area of the bounding box
+    var boundingBoxArea = (bounds.getNorthEast().lat() - bounds.getSouthWest().lat()) *
+                          (bounds.getNorthEast().lng() - bounds.getSouthWest().lng());
+
+    // Adjust gridSize based on the area
+    // You may need to experiment with this formula to get the desired behavior
+    var gridSize = Math.sqrt(boundingBoxArea) * 0.00001;
+
+    return gridSize;
+}
+
+
 
       document.getElementById('get-live-location').addEventListener('click', function () {
         if ('geolocation' in navigator) {
