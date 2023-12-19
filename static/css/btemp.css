@@ -1,0 +1,34 @@
+html, body, #selected_map_canvas {
+    height: 100%;
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+}
+
+.design{
+    position: absolute;
+    top: 20px;
+    background-color: white;
+    color: black;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); 
+    border: none;
+    border-radius: 20px;
+    padding: 10px;
+    width: 200px;
+    cursor: pointer;
+}
+
+.design:hover{
+    background-color: grey;
+    color: white;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+
+.button{
+    left: 30px;
+}
+
+.button2{
+    left: 260px;
+}
