@@ -4,6 +4,35 @@ html, body, #selected_map_canvas {
     margin: 0px;
     padding: 0px;
 }
+.navbar a{
+    overflow: hidden;
+    padding: 14px 16px;
+    text-align: center;
+    text-decoration: dotted;
+    color: white;
+}
+.nav-item{
+    font-family: monospace;
+    padding-left: 50px;
+}
+.nav-link{
+display: block;
+color: white;
+text-align: center;
+padding: 14px 16px;
+text-decoration: none;
+}
+.navbar a:hover{
+background-color: white;
+color:black;
+}
+.custom-navbar{
+background-color: black
+}
+.navbar-brand{
+color:white;
+font-family: monospace;
+}   
 
 .design{
     position: absolute;
@@ -25,27 +54,23 @@ html, body, #selected_map_canvas {
 }
 
 .button{
-    margin-top: 50px;
+    margin-top: 60px;
     left: 30px;
 }
 
 .button2{
-    margin-top: 50px;
+    margin-top: 60px;
     left: 260px;
 }
 .button3{
-    margin-top:100px;
+    margin-top:110px;
     left: 30px;
 }
 .button4{
-    margin-top:100px;
+    margin-top:110px;
     left: 260px;
 }
 .button5{
-    margin-top:150px;
-    left: 30px;
-}
-.button6{
-    margin-top:150px;
-    left: 260px;
+    margin-top:160px;
+    left: 150px;
 }
