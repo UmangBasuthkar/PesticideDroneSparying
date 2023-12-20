@@ -1,22 +1,120 @@
 from __future__ import print_function
 import time
-from dronekit import connect, VehicleMode, LocationGlobalRelative
+from pymavlink import mavutil
+from dronekit import connect, VehicleMode, LocationGlobalRelative,Command
 from dronekit import *
+from math import radians, sin, cos, sqrt, atan2
 hold = False
 pitch = False
+ret=False
+spray=False
+
+def checkabort(abort_flag=True):
+    global ret
+    ret=abort_flag
+    
+def checksprinkler(flag):
+    global spray
+    spray=flag
+
+def setsprinkler(vehicle, spray):
+    if spray == False:
+        print("Stopped the Spray")
+        cmd =vehicle.message_factory.command_long_encode( 1, 0, mavutil.mavlink.MAV_CMD_DO_SET_SERVO, 0, 5, 900, 0, 0, 0, 0, 0)
+        vehicle.send_mavlink(cmd)
+    else:
+        print("Started the spray")
+        cmd =vehicle.message_factory.command_long_encode( 1, 0, mavutil.mavlink.MAV_CMD_DO_SET_SERVO, 0, 5, 2000, 0, 0, 0, 0, 0)
+        vehicle.send_mavlink(cmd)
+
+
+def get_distance(lat1, lon1, lat2, lon2):
+    R = 6371000.0
+    lat1_rad = radians(lat1)
+    lon1_rad = radians(lon1)
+    lat2_rad = radians(lat2)
+    lon2_rad = radians(lon2)
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+
+    a = sin(dlat / 2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    distance = R * c
+
+    timer = round(distance // 6)
+    return int(timer)
+
+
+def fetch_container_val(initval):
+    global spray
+    if initval <= 0:
+        spray=False
+        print("Tank has run out of pesticide")
+    elif 0 < initval < 0.5:
+        print("Tank is running out of pesticide")
+        print("Current Tank volume: ", initval)
+    else:
+        print("Current Tank volume: ", initval)
+    preex = initval - 0.060
+    return preex
+
+
+def abortmission(vehicle):
+    global ret
+    ret =False
+    print("EMERGENCY RTL TRIGGERED")
+    vehicle.mode=VehicleMode("RTL")
+    print("Returning To Launch")
+    print("Disarming motors")
+    vehicle.armed = False
+    print("Close vehicle object")
+    vehicle.close()
+
 def buttonhold(x):
     global hold
     hold = True
+
 def buttonpitch(y):
     global pitch
     pitch = True
+
 def detect_object():
     # Return True if an object is detected, False otherwise
     return False
+
 def object_movement():
     #Return true if object is moving towards
     return False
-    
+
+def distance_to_current_waypoint(vehicle):
+    """
+    Gets distance in metres to the current waypoint. 
+    It returns None for the first waypoint (Home location).
+    """
+    nextwaypoint = vehicle.commands.next
+    if nextwaypoint==0:
+        return None
+    missionitem=vehicle.commands[nextwaypoint-1] #commands are zero indexed
+    lat = missionitem.x
+    lon = missionitem.y
+    alt = missionitem.z
+    targetWaypointLocation = LocationGlobalRelative(lat,lon,alt)
+    distancetopoint = get_distance_metres(vehicle.location.global_frame, targetWaypointLocation)
+    return distancetopoint
+
+def get_distance_metres(aLocation1, aLocation2):
+    """
+    Returns the ground distance in metres between two LocationGlobal objects.
+
+    This method is an approximation, and will not be accurate over large distances and close to the 
+    earth's poles. It comes from the ArduPilot test code: 
+    https://github.com/diydrones/ardupilot/blob/master/Tools/autotest/common.py
+    """
+    dlat = aLocation2.lat - aLocation1.lat
+    dlong = aLocation2.lon - aLocation1.lon
+    return math.sqrt((dlat*dlat) + (dlong*dlong)) * 1.113195e5
+
 def arm_and_takeoff(vehicle,altitude):
     print("Basic pre-arm checks")
     while not vehicle.is_armable:
@@ -36,6 +134,7 @@ def arm_and_takeoff(vehicle,altitude):
             print("Reached target altitude")
             break
         time.sleep(1)
+
 def pos_hold(vehicle):
     global pitch
     print("Drone Holded")
@@ -58,6 +157,7 @@ def pos_hold(vehicle):
             pitch_back(vehicle)
             break
         time.sleep(1)
+
 def pitch_back(vehicle):
     global pitch
     print("Pitching back")
@@ -79,44 +179,87 @@ def pitch_back(vehicle):
             pitch = False
         l += 1
         time.sleep(1)
-def fly(data,altitude,groundspeed,airspeed):
-    #connection_string = 'COM4'
-    connection_string = "udp:127.0.0.1:14550"
-    print('Connecting to vehicle on: %s' % connection_string)
-    #vehicle = connect(connection_string, wait_ready=True,timeout=60,baud=57600)
-    vehicle = connect(connection_string, wait_ready=True)
-    flag = 0
-    try:
-        arm_and_takeoff(vehicle,altitude)
-        print("Set default/target airspeed to {}".format(airspeed))
-        vehicle.airspeed = airspeed
-        global hold
-        for i in range(1,len(data)):
-            print("Going to point ", i-1)
-            point = LocationGlobalRelative(float(data[i]['lat']),float(data[i]['lng']),altitude)
-            vehicle.simple_goto(point,groundspeed=groundspeed)
-            j = 1
-            while j<=30:
-                if(vehicle.location.global_frame.lat == data[i]['lat'] and vehicle.location.global_frame.lng == data[i]['lng']):
-                    time.sleep(5)
-                    break
-                if detect_object() or hold:
-                    flag = 1
-                    hold = False
-                    print("Object detected")
-                    pos_hold(vehicle)
-                    print("DONE")
-                    break
-                j += 1
-                time.sleep(1)
-            if flag == 1:
-                break
-            print("Success")
-    except KeyboardInterrupt:
-        print("User interrupted the program")
-    finally:
-        print("Going back home")
-        vehicle.mode = VehicleMode("RTL")
-        print("Disarming motors")
-        vehicle.armed = False
+
+def grid_mission(vehicle,data,groundspeed,altitude):
+    global hold
+    cmds = vehicle.commands
+
+    print(" Clearing any existing commands")
+    cmds.clear() 
+    
+    print(" Define/add new commands.")
+    # Add new commands. The meaning/order of the parameters is documented in the Command class. 
+     
+    #Add MAV_CMD_NAV_TAKEOFF command. This is ignored if the vehicle is already in the air.
+    cmds.add(Command(
+         0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
+        0, 0, 0, 0, 0, 0, 0, 0, altitude))
+    
+    for i in range(len(data)):
+        cmds.add(Command( 
+            0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0,
+              data[i]['lat'], data[i]['lng'], altitude))
+    cmds.add(Command( 0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 
+                     0, 0, 0, 0, 0, data[len(data)-1]['lat'], data[len(data)-1]['lng'], altitude))
+    cmds.upload()
+    print("Commands uploaded")
+
+def fly(data,altitude,groundspeed,airspeed,cont): 
+    connection_string = 'COM4' 
+    #connection_string = "udp:127.0.0.1:14550" 
+    print('Connecting to vehicle on: %s' % connection_string) 
+    vehicle = connect(connection_string, wait_ready=True,timeout=60,baud=57600) 
+    #vehicle = connect(connection_string, wait_ready=True) 
+    flag = 0 
+    try: 
+        global hold 
+        global pitch 
+        global ret
+        global spray
+        grid_mission(vehicle,data,groundspeed,altitude) 
+        arm_and_takeoff(vehicle,altitude) 
+        print("Set default/target airspeed to {}".format(airspeed)) 
+        vehicle.airspeed = airspeed 
+        print("MISSION IN STARTING SOON..") 
+        time.sleep(3) 
+        vehicle.commands.next=0 
+        vehicle.mode = VehicleMode("AUTO") 
+        while True: 
+ 
+            if(ret==True): 
+                abortmission(vehicle) 
+                break 
+ 
+            if(hold or detect_object()): 
+                hold = False 
+                pos_hold(vehicle) 
+                break 
+            if(pitch or object_movement()): 
+                pitch = False 
+                pitch_back(vehicle) 
+                break 
+                                                        
+            nextwaypoint=vehicle.commands.next 
+            if(nextwaypoint==2):
+                setsprinkler(vehicle,True)
+                spray=True
+            if(spray): 
+                val=fetch_container_val(cont) 
+                print(val) 
+                cont=val 
+            print('Distance to waypoint (%s): %s' % (nextwaypoint, distance_to_current_waypoint(vehicle))) 
+            if nextwaypoint==len(data): #Dummy waypoint - as soon as we reach waypoint 4 this is true and we exit. 
+                setsprinkler(vehicle,False)
+                print("Exit 'standard' mission when start heading to final waypoint") 
+                break 
+             
+            time.sleep(1) 
+    except KeyboardInterrupt: 
+        print("User interrupted the program") 
+    finally: 
+        print("Going back home") 
+        vehicle.parameters['RTL_ALT'] = 0
+        vehicle.mode = VehicleMode("RTL") 
+        print("Disarming motors") 
+        vehicle.armed = False 
         vehicle.close()
