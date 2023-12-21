@@ -28,23 +28,6 @@ def setsprinkler(vehicle, spray):
         vehicle.send_mavlink(cmd)
 
 
-def get_distance(lat1, lon1, lat2, lon2):
-    R = 6371000.0
-    lat1_rad = radians(lat1)
-    lon1_rad = radians(lon1)
-    lat2_rad = radians(lat2)
-    lon2_rad = radians(lon2)
-    dlat = lat2_rad - lat1_rad
-    dlon = lon2_rad - lon1_rad
-
-    a = sin(dlat / 2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlon / 2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-    distance = R * c
-
-    timer = round(distance // 6)
-    return int(timer)
-
 
 def fetch_container_val(initval):
     global spray
@@ -79,13 +62,13 @@ def buttonpitch(y):
     global pitch
     pitch = True
 
-def detect_object():
-    # Return True if an object is detected, False otherwise
-    return False
+# def detect_object():
+#     # Return True if an object is detected, False otherwise
+#     return False
 
-def object_movement():
-    #Return true if object is moving towards
-    return False
+# def object_movement():
+#     #Return true if object is moving towards
+#     return False
 
 def distance_to_current_waypoint(vehicle):
     """
@@ -149,10 +132,10 @@ def pos_hold(vehicle):
         0, 0, 0,
         0, 0)
     k = 1
+    vehicle.send_mavlink(msg)
     while k <= 10:  
-        vehicle.send_mavlink(msg)
         k += 1
-        if(object_movement() or pitch):
+        if(pitch):
             pitch = False
             pitch_back(vehicle)
             break
@@ -172,16 +155,47 @@ def pitch_back(vehicle):
         0, 0, 0,
         0, 0)
     vehicle.send_mavlink(msg)
+    time.sleep(2)
+    msg = vehicle.message_factory.set_position_target_local_ned_encode(
+        0,
+        0, 0,
+        mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED,
+        0b0000111111000111,
+        0, 0, 0,
+        0, 0, 0, # x, y, z velocity in m/s
+        0, 0, 0,
+        0, 0)
+    vehicle.send_mavlink(msg)
     l = 1
     while l<=10:
-        if(object_movement() or pitch):
+        if(pitch):
+            msg = vehicle.message_factory.set_position_target_local_ned_encode(
+            0,
+            0, 0,
+            mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED,
+            0b0000111111000111,
+            0, 0, 0,
+            -1, 0, 0, # x, y, z velocity in m/s
+            0, 0, 0,
+                0, 0)
             vehicle.send_mavlink(msg)
             pitch = False
+        else:
+            msg = vehicle.message_factory.set_position_target_local_ned_encode(
+                0,
+                0, 0,
+                mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED,
+                0b0000111111000111,
+                0, 0, 0,
+                0, 0, 0, # x, y, z velocity in m/s
+                0, 0, 0,
+                0, 0)
+            vehicle.send_mavlink(msg)
         l += 1
         time.sleep(1)
 
 def grid_mission(vehicle,data,groundspeed,altitude):
-    global hold
+
     cmds = vehicle.commands
 
     print(" Clearing any existing commands")
