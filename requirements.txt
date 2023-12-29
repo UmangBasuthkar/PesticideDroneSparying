@@ -1,0 +1,8 @@
+__future__
+time
+pymavlink==2.4.8
+dronekit==2.9.2
+math
+mavproxy
+flask
+gunicorn
