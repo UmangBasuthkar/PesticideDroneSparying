@@ -14,9 +14,7 @@ def startmission():
 @app.route("/", methods=["POST"]) 
 def process_data(): 
     if request.method == 'POST': 
-        from RunCommand import command 
-        data = request.get_json() 
-        command(str(data[0]['lat']), str(data[0]['lng'])) 
+        data = request.get_json()
         time.sleep(8) 
         from Test import fly 
         fly(data,10, float(2.0), float(2.0),10) 
