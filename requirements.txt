@@ -1,5 +1,5 @@
-pymavlink==2.4.8
-dronekit==2.9.2
-mavproxy
-flask
+pymavlink==2.4.41
+dronekit-sitl==3.3.0
+mavproxy==1.8.70
+flask==3.0.3
 gunicorn
