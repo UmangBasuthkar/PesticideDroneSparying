@@ -62,13 +62,13 @@ def buttonpitch(y):
     global pitch
     pitch = True
 
-# def detect_object():
-#     # Return True if an object is detected, False otherwise
-#     return False
+def detect_object():
+     # Return True if an object is detected, False otherwise
+     return False
 
-# def object_movement():
-#     #Return true if object is moving towards
-#     return False
+def object_movement():
+     #Return true if object is moving towards
+     return False
 
 def distance_to_current_waypoint(vehicle):
     """
@@ -219,11 +219,11 @@ def grid_mission(vehicle,data,groundspeed,altitude):
     print("Commands uploaded")
 
 def fly(data,altitude,groundspeed,airspeed,cont): 
-    connection_string = 'COM4' 
-    #connection_string = "udp:127.0.0.1:14550" 
+    #connection_string = 'COM4' 
+    connection_string = "udp:127.0.0.1:14550" 
     print('Connecting to vehicle on: %s' % connection_string) 
-    vehicle = connect(connection_string, wait_ready=True,timeout=60,baud=57600) 
-    #vehicle = connect(connection_string, wait_ready=True) 
+    #vehicle = connect(connection_string, wait_ready=True,timeout=60,baud=57600) 
+    vehicle = connect(connection_string, wait_ready=True) 
     flag = 0 
     try: 
         global hold 
